@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AI Medical Assistant — สดใส (Teal / MintGreen)</title>
+<style>
+  /* ---------- สดใส (Teal + MintGreen) ---------- */
+  :root{
+    --bg: #f2fffd;
+    --panel: #ffffff;
+    --teal: #00b7a7;     /* main */
+    --mint: #bff5ea;     /* accent */
+    --accent-2: #fff7ff;
+    --muted: #4b6b67;
+    --soft-shadow: 0 8px 30px rgba(0,183,167,0.08);
+    --round: 12px;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial;
+    color-scheme: light;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#f7fffe,#effffb);color:#073a36}
+  a{color:var(--teal)}
+  .container{max-width:1150px;margin:18px auto;padding:18px;display:flex;flex-direction:column;gap:18px}
+
+  /* Header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:60px;height:60px;border-radius:14px;background:linear-gradient(135deg,var(--teal),var(--mint));
+    display:grid;place-items:center;font-weight:800;color:#003733;font-family:monospace;font-size:20px;box-shadow:var(--soft-shadow)
+  }
+  h1{margin:0;font-size:20px}
+  .subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+
+  /* Tabs */
+  nav.tabs{display:flex;gap:8px;align-items:center}
+  .tab{
+    padding:10px 14px;border-radius:12px;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer;
+    font-weight:700;transition:all .12s;
+  }
+  .tab.active{
+    background:linear-gradient(90deg, rgba(0,183,167,0.12), rgba(191,245,234,0.45));
+    color:#003733;border:1px solid rgba(0,183,167,0.16);box-shadow:var(--soft-shadow)
+  }
+
+  /* Panels */
+  main{display:flex;flex-direction:column;gap:14px}
+  .panel{background:var(--panel);border-radius:var(--round);padding:16px;box-shadow:var(--soft-shadow);border:1px solid rgba(6,36,33,0.03)}
+
+  /* Dashboard cards */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .card{
+    padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#f6fffb);border:1px solid rgba(6,36,33,0.03);
+    display:flex;flex-direction:column;gap:8px;min-height:96px
+  }
+  .label{font-size:13px;color:var(--muted)}
+  .value{font-size:22px;font-weight:800;color:#023f3b}
+  .note{font-size:12px;color:var(--muted)}
+
+  /* Image Analysis */
+  .upload-grid{display:grid;grid-template-columns:320px 1fr;gap:14px;align-items:start}
+  .input, select {width:100%;padding:10px;border-radius:10px;border:1px solid rgba(6,36,33,0.06);background:#fff}
+  .preview{height:300px;border-radius:10px;border:1px dashed rgba(6,36,33,0.06);display:grid;place-items:center;background:linear-gradient(180deg,#ffffff,var(--accent-2))}
+  .preview img{max-width:100%;max-height:100%;border-radius:10px;object-fit:contain}
+
+  /* Chat */
+  .chat-row{display:flex;gap:12px;align-items:flex-start}
+  .chat-box{flex:1;display:flex;flex-direction:column;height:520px;border-radius:12px;padding:12px;background:linear-gradient(180deg,#fff,#f8fffb);border:1px solid rgba(6,36,33,0.03)}
+  .messages{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+  .bubble{max-width:76%;padding:10px;border-radius:14px;font-size:14px}
+  .bubble.user{align-self:flex-end;background:linear-gradient(90deg,rgba(0,183,167,0.14),rgba(191,245,234,0.28));color:#033b38}
+  .bubble.ai{align-self:flex-start;background:#ffffff;border:1px solid rgba(6,36,33,0.04)}
+  .chat-controls{display:flex;gap:8px;margin-top:8px}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px;border-bottom:1px dashed rgba(6,36,33,0.04);text-align:left;font-size:14px;color:#033b38}
+  th{font-weight:800;color:var(--teal)}
+
+  /* Buttons */
+  .btn{
+    background:linear-gradient(90deg,var(--teal),var(--mint));border:none;padding:10px 12px;border-radius:10px;color:#003733;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,183,167,0.08)
+  }
+  .btn.ghost{background:transparent;border:1px solid rgba(6,36,33,0.06);color:var(--teal)}
+  .muted{color:var(--muted);font-size:13px}
+  .small{font-size:13px}
+
+  /* responsive */
+  @media (max-width:920px){
+    .upload-grid{grid-template-columns:1fr}
+    .chat-row{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand">
+      <div class="logo">AI</div>
+      <div>
+        <h1>AI Medical Assistant</h1>
+        <div class="subtitle">สดใส • Backend: <code>http://localhost:8000</code></div>
+      </div>
+    </div>
+
+    <nav class="tabs" aria-label="เมนู">
+      <button class="tab active" data-tab="dashboard">Dashboard</button>
+      <button class="tab" data-tab="analyze">Image Analysis</button>
+      <button class="tab" data-tab="chat">Chatbot</button>
+      <button class="tab" data-tab="search">Patient Search</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Dashboard -->
+    <section id="dashboard" class="panel" data-panel>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin:0">Dashboard</h2>
+          <div class="muted small">สรุปสถิติผู้ป่วย (GET → <code>/patient/stats</code>)</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="refreshStats" class="btn">Refresh</button>
+          <div id="statsLoader" class="muted small" style="display:none">กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <div id="statsArea" class="cards" style="margin-top:14px">
+        <!-- cards inserted here -->
+      </div>
+      <div style="margin-top:10px" class="muted small">Last: <span id="lastUpdated">-</span></div>
+    </section>
+
+    <!-- Image Analysis -->
+    <section id="analyze" class="panel" data-panel hidden>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin:0">Image Analysis</h2>
+          <div class="muted small">อัปโหลดภาพ → POST → <code>/analyze</code> (รองรับ X-ray / Blood)</div>
+        </div>
+      </div>
+
+      <div class="upload-grid" style="margin-top:12px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label class="small">เลือกรูปภาพ</label>
+          <input id="imageFile" type="file" accept="image/*" class="input">
+          <label class="small">ประเภท</label>
+          <select id="imageType" class="input">
+            <option value="xray">X-ray</option>
+            <option value="blood">Blood</option>
+          </select>
+          <label class="small">Patient ID (optional)</label>
+          <input id="imagePatientId" type="text" placeholder="เช่น P0001" class="input">
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button id="analyzeBtn" class="btn">Analyze</button>
+            <button id="clearAnalyze" class="btn ghost">Clear</button>
+            <div id="analyzeLoader" class="muted small" style="display:none;align-self:center">กำลังวิเคราะห์...</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="preview" id="imagePreview"><div class="muted small">ยังไม่มีภาพ</div></div>
+          <div id="analysisResult" style="padding:12px;border-radius:10px;background:var(--mint);border:1px solid rgba(6,36,33,0.03);min-height:140px">
+            <div class="muted small">ผลการวิเคราะห์จะแสดงที่นี่</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chat -->
+    <section id="chat" class="panel" data-panel hidden>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin:0">Chatbot</h2>
+          <div class="muted small">คุยกับหมอ AI (POST → <code>/chat</code>)</div>
+        </div>
+        <div class="muted small">session: <span id="sessionId">-</span></div>
+      </div>
+
+      <div class="chat-row" style="margin-top:12px">
+        <div class="chat-box">
+          <div id="messages" class="messages"></div>
+
+          <div class="chat-controls">
+            <input id="chatInput" type="text" placeholder="พิมพ์ข้อความ..." class="input" style="flex:1">
+            <button id="sendBtn" class="btn">Send</button>
+            <button id="resetSession" class="btn ghost">Reset</button>
+          </div>
+        </div>
+
+        <aside style="width:260px">
+          <div style="padding:12px;border-radius:10px;background:#fff;border:1px solid rgba(6,36,33,0.03)">
+            <div style="font-weight:800">Session</div>
+            <div class="muted small" style="margin-top:8px">ID: <div id="sessionIdSmall" style="word-break:break-all"></div></div>
+            <div style="margin-top:12px"><button id="loadHistory" class="btn ghost" style="width:100%">Load (local)</button></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Search -->
+    <section id="search" class="panel" data-panel hidden>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h2 style="margin:0">Patient Search</h2>
+          <div class="muted small">ค้นหาผู้ป่วย → POST → <code>/patient/search</code></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <input id="searchInput" type="text" class="input" placeholder="ชื่อ / ID / หมายเหตุ..." style="flex:1">
+          <select id="searchType" class="input" style="width:160px">
+            <option value="name">Name</option>
+            <option value="id">ID</option>
+            <option value="notes">Notes</option>
+          </select>
+          <button id="searchBtn" class="btn">Search</button>
+          <button id="exportCsv" class="btn ghost">Export CSV</button>
+        </div>
+
+        <div style="overflow:auto">
+          <table id="resultsTable">
+            <thead><tr><th>ID</th><th>Name</th><th>DOB</th><th>Last Visit</th><th>Notes</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(() => {
+  const API_BASE = 'http://localhost:8000';
+
+  // --- Tabs SPA ---
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('[data-panel]');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const target = t.dataset.tab;
+    panels.forEach(p => p.id === target ? p.hidden = false : p.hidden = true);
+    if (target === 'dashboard') loadStats();
+  }));
+
+  // --- Dashboard ---
+  const statsArea = document.getElementById('statsArea');
+  const statsLoader = document.getElementById('statsLoader');
+  const lastUpdated = document.getElementById('lastUpdated');
+  document.getElementById('refreshStats').addEventListener('click', loadStats);
+
+  async function loadStats(){
+    statsLoader.style.display = 'inline';
+    statsArea.innerHTML = '';
+    try{
+      const res = await fetch(API_BASE + '/patient/stats', { method: 'GET' });
+      if (!res.ok) throw new Error('Status ' + res.status);
+      const data = await res.json();
+      // Accept flexible shapes:
+      // { success:true, stats: {...} } or { total_patients:..., ... }
+      const stats = (data && data.stats) ? data.stats : data;
+      renderStats(stats || {});
+      lastUpdated.textContent = new Date().toLocaleString();
+    } catch(err){
+      console.error(err);
+      statsArea.innerHTML = `<div class="muted">ไม่สามารถโหลดสถิติ: ${escape(err.message)}</div>`;
+    } finally {
+      statsLoader.style.display = 'none';
+    }
+  }
+
+  function renderStats(stats){
+    statsArea.innerHTML = '';
+    const total = stats.total_patients ?? stats.total ?? stats.count ?? '-';
+    const avg = stats.avg_age ?? stats.average_age ?? '-';
+    const cond = stats.conditions ?? stats.condition_counts ?? {};
+    const blood = stats.blood_types ?? stats.blood_counts ?? {};
+    const gender = stats.gender ?? stats.gender_counts ?? {};
+
+    const cards = [
+      {label:'Total Patients', value: total, note:`Avg age: ${avg}`},
+      {label:'Top Conditions', value: topList(cond,3), note:`Unique: ${Object.keys(cond||{}).length}`},
+      {label:'Blood Types', value: listPairs(blood), note:`Types: ${Object.keys(blood||{}).length}`},
+      {label:'Gender', value: listPairs(gender), note:`Categories: ${Object.keys(gender||{}).length}`},
+    ];
+
+    for (const c of cards){
+      const el = document.createElement('div'); el.className = 'card';
+      el.innerHTML = `<div class="label">${escapeHtml(c.label)}</div><div class="value">${escapeHtml(c.value)}</div><div class="note">${escapeHtml(c.note)}</div>`;
+      statsArea.appendChild(el);
+    }
+  }
+
+  function topList(obj={}, n=3){
+    try { return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n).map(x=>`${x[0]} (${x[1]})`).join(', ') || '-'; }
+    catch(e){ return '-'; }
+  }
+  function listPairs(obj={}){
+    try { return Object.entries(obj).map(x=>`${x[0]}:${x[1]}`).join(' | ') || '-'; }
+    catch(e){ return '-'; }
+  }
+
+  // initial
+  loadStats();
+
+  // --- Image Analysis ---
+  const fileInput = document.getElementById('imageFile');
+  const imageType = document.getElementById('imageType');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const clearAnalyze = document.getElementById('clearAnalyze');
+  const preview = document.getElementById('imagePreview');
+  const resultBox = document.getElementById('analysisResult');
+  const analyzeLoader = document.getElementById('analyzeLoader');
+
+  let selectedFile = null;
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    selectedFile = f || null;
+    if (!f){ preview.innerHTML = '<div class="muted small">ยังไม่มีภาพ</div>'; return; }
+    const url = URL.createObjectURL(f);
+    preview.innerHTML = `<img src="${url}" alt="preview">`;
+  });
+
+  clearAnalyze.addEventListener('click', () => {
+    fileInput.value = ''; selectedFile = null;
+    preview.innerHTML = '<div class="muted small">ยังไม่มีภาพ</div>';
+    resultBox.innerHTML = '<div class="muted small">ผลการวิเคราะห์จะแสดงที่นี่</div>';
+  });
+
+  analyzeBtn.addEventListener('click', async () => {
+    if (!selectedFile){
+      alert('กรุณาเลือกไฟล์ก่อน');
+      return;
+    }
+    analyzeLoader.style.display = 'inline';
+    resultBox.innerHTML = '';
+    try{
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+      fd.append('image_type', imageType.value);
+      const pid = document.getElementById('imagePatientId').value.trim();
+      if (pid) fd.append('patient_id', pid);
+
+      const res = await fetch(API_BASE + '/analyze', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Status ' + res.status);
+      const data = await res.json();
+      if (data && data.success){
+        displayAnalysis(data);
+      } else {
+        // allow backend to return raw result too
+        displayAnalysis(data);
+      }
+    } catch(err){
+      console.error(err);
+      resultBox.innerHTML = `<div class="muted">ข้อผิดพลาด: ${escape(err.message)}</div>`;
+    } finally {
+      analyzeLoader.style.display = 'none';
+    }
+  });
+
+  function displayAnalysis(data){
+    // flexible rendering
+    const type = data.type || data.image_type || '';
+    let html = `<div style="font-weight:700;margin-bottom:8px">${type ? 'Type: '+escapeHtml(type) : ''}</div>`;
+
+    // common keys: result, diagnosis, message, confidence, image_url, filename, cell_counts
+    if (data.result || data.diagnosis || data.message){
+      const main = data.result || data.diagnosis || data.message;
+      html += `<div><strong>Result:</strong> ${escapeHtml(main)}</div>`;
+    } else {
+      html += `<div><pre style="white-space:pre-wrap">${escapeHtml(JSON.stringify(data, null, 2))}</pre></div>`;
+    }
+    if (data.confidence) html += `<div class="muted small">Confidence: ${escapeHtml(String(data.confidence))}</div>`;
+    if (data.cell_counts) html += `<div class="muted small">Counts: ${escapeHtml(JSON.stringify(data.cell_counts))}</div>`;
+    if (data.image_url) html += `<div style="margin-top:8px"><img src="${escapeHtml(data.image_url)}" style="max-width:100%;border-radius:8px" alt="result image"></div>`;
+    resultBox.innerHTML = html;
+  }
+
+  // --- Chat (/chat) ---
+  const messagesEl = document.getElementById('messages');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const resetBtn = document.getElementById('resetSession');
+  const sessionIdEl = document.getElementById('sessionId');
+  const sessionIdSmall = document.getElementById('sessionIdSmall');
+  const loadHistoryBtn = document.getElementById('loadHistory');
+
+  let sessionId = localStorage.getItem('ai_med_session') || `sess_${Date.now()}`;
+  localStorage.setItem('ai_med_session', sessionId);
+  sessionIdEl.textContent = sessionId;
+  sessionIdSmall.textContent = sessionId;
+
+  sendBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+  resetBtn.addEventListener('click', () => {
+    if (!confirm('แน่ใจจะเริ่ม session ใหม่?')) return;
+    fetch(API_BASE + '/chat/clear/' + encodeURIComponent(sessionId)).catch(()=>{});
+    sessionId = `sess_${Date.now()}`; localStorage.setItem('ai_med_session', sessionId);
+    sessionIdEl.textContent = sessionId; sessionIdSmall.textContent = sessionId;
+    messagesEl.innerHTML = '';
+  });
+
+  loadHistoryBtn.addEventListener('click', () => {
+    // For demo: load last messages from localStorage (if any)
+    const convo = localStorage.getItem('ai_med_convo_' + sessionId);
+    if (convo){
+      messagesEl.innerHTML = '';
+      try {
+        const arr = JSON.parse(convo);
+        arr.forEach(m => appendBubble(m.text, m.who));
+      } catch(e){
+        alert('No history or parse error.');
+      }
+    } else {
+      alert('No saved local history for this session.');
+    }
+  });
+
+  async function sendMessage(){
+    const text = chatInput.value.trim();
+    if (!text) return;
+    appendBubble(text, 'user');
+    chatInput.value = '';
+    const placeholder = appendBubble('กำลังพิมพ์...', 'ai', true);
+
+    try{
+      const fd = new FormData();
+      fd.append('message', text);
+      fd.append('session_id', sessionId);
+
+      const res = await fetch(API_BASE + '/chat', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Status ' + res.status);
+      const data = await res.json();
+      if (data && data.success){
+        const reply = data.reply || data.response || data.message || 'ไม่มีข้อความตอบกลับ';
+        replaceBubble(placeholder, reply);
+        if (data.session_id){
+          sessionId = data.session_id; localStorage.setItem('ai_med_session', sessionId);
+          sessionIdEl.textContent = sessionId; sessionIdSmall.textContent = sessionId;
+        }
+        saveLocalMessage(sessionId, {who:'user', text});
+        saveLocalMessage(sessionId, {who:'ai', text: reply});
+      } else {
+        replaceBubble(placeholder, 'Error: ' + (data.error || JSON.stringify(data)));
+      }
+    } catch(err){
+      console.error(err);
+      replaceBubble(placeholder, 'ไม่สามารถเชื่อมต่อ: ' + err.message);
+    }
+  }
+
+  function appendBubble(text, who='ai', temp=false){
+    const el = document.createElement('div');
+    el.className = 'bubble ' + (who === 'user' ? 'user' : 'ai');
+    el.dataset.temp = temp ? '1' : '0';
+    el.innerHTML = text;
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return el;
+  }
+  function replaceBubble(el, text){
+    el.dataset.temp = '0';
+    el.innerHTML = text;
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function saveLocalMessage(sid, msg){
+    try{
+      const key = 'ai_med_convo_' + sid;
+      const prev = localStorage.getItem(key);
+      const arr = prev ? JSON.parse(prev) : [];
+      arr.push({who: msg.who, text: msg.text, time: Date.now()});
+      localStorage.setItem(key, JSON.stringify(arr.slice(-200))); // keep last 200
+    }catch(e){ /* ignore */ }
+  }
+
+  // --- Patient Search (/patient/search) ---
+  const searchInput = document.getElementById('searchInput');
+  const searchType = document.getElementById('searchType');
+  const searchBtn = document.getElementById('searchBtn');
+  const resultsBody = document.querySelector('#resultsTable tbody');
+  const exportBtn = document.getElementById('exportCsv');
+
+  searchBtn.addEventListener('click', doSearch);
+  searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+
+  async function doSearch(){
+    const q = searchInput.value.trim();
+    if (!q){ alert('กรุณากรอกคำค้นหา'); return; }
+    resultsBody.innerHTML = '';
+    try{
+      const fd = new FormData();
+      fd.append('search_query', q);
+      fd.append('search_type', searchType.value);
+      const res = await fetch(API_BASE + '/patient/search', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('Status ' + res.status);
+      const data = await res.json();
+      if (data && data.success){
+        renderResults(data.results || []);
+      } else if (Array.isArray(data)){
+        renderResults(data);
+      } else {
+        resultsBody.innerHTML = `<tr><td colspan="5" class="muted">Error: ${escapeHtml(JSON.stringify(data))}</td></tr>`;
+      }
+    } catch(err){
+      console.error(err);
+      resultsBody.innerHTML = `<tr><td colspan="5" class="muted">ไม่สามารถค้นหา: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderResults(list){
+    resultsBody.innerHTML = '';
+    if (!list || list.length === 0){ resultsBody.innerHTML = `<tr><td colspan="5" class="muted">ไม่พบข้อมูล</td></tr>`; return; }
+    list.forEach(item => {
+      const id = item.id ?? item.ID ?? item.patient_id ?? '';
+      const name = item.name ?? item.Name ?? item.fullname ?? '';
+      const dob = item.dob ?? item.DOB ?? item.date_of_birth ?? '-';
+      const last = item.last_visit ?? item.lastVisit ?? item['Last Visit'] ?? '-';
+      const notes = item.notes ?? item.Notes ?? '-';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(id)}</td><td><a href="#" class="patient-link">${escapeHtml(name)}</a></td><td>${escapeHtml(dob)}</td><td>${escapeHtml(last)}</td><td>${escapeHtml(notes)}</td>`;
+      tr.querySelector('.patient-link').addEventListener('click', (e) => { e.preventDefault(); showPatientDetail(item); });
+      resultsBody.appendChild(tr);
+    });
+  }
+
+  function showPatientDetail(obj){
+    const modal = document.getElementById('patientDetailModal');
+    document.getElementById('pdName').textContent = obj.name ?? obj.Name ?? obj.fullname ?? 'Patient';
+    document.getElementById('pdJson').textContent = JSON.stringify(obj, null, 2);
+    modal.style.display = 'block';
+  }
+
+  // close modal when clicking outside or pressing close (create close button)
+  (function setupModalClose(){
+    const modal = document.getElementById('patientDetailModal');
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.className = 'btn ghost';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.right = '16px';
+    closeBtn.style.top = '16px';
+    closeBtn.addEventListener('click', ()=>modal.style.display='none');
+    modal.appendChild(closeBtn);
+  })();
+
+  exportBtn.addEventListener('click', () => {
+    const headers = Array.from(document.querySelectorAll('#resultsTable thead th')).map(h=>h.textContent);
+    const rows = Array.from(document.querySelectorAll('#resultsTable tbody tr')).map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
+    if (rows.length === 0){ alert('ไม่มีข้อมูลสำหรับ export'); return; }
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(',')).join('\n')].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'patients.csv'; document.body.appendChild(a); a.click(); a.remove();
+  });
+
+  // Utility
+  function escapeHtml(s){ if (s === null || s === undefined) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m])); }
+  function escape(s){ try{return escapeHtml(String(s)); }catch(e){return '';} }
+
+  // focus
+  window.addEventListener('load', ()=>{ document.querySelector('.tab.active')?.focus(); });
+
+})();
+</script>
+</body>
+</html>
